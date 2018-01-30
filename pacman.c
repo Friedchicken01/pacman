@@ -1,9 +1,46 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
+
+#if defined(__unix__)||defined(__APPLE__)
+	#include <termios.h>
+	#include <unistd.h>
+	#include <fcntl.h>
+	
+	#define CLEAR "clear"
+	#define getcharacter getchar()
+	#define DELAY 50
+	
+	int kbhit(){
+		struct termios oldt, newt;
+	  	int ch;
+	  	int oldf;
+	 
+	  	tcgetattr(STDIN_FILENO, &oldt);
+	  	newt = oldt;
+	  	newt.c_lflag &= ~(ICANON | ECHO);
+	  	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	  	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
+	  	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+	 
+	  	ch = getchar();
+	 
+	  	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	  	fcntl(STDIN_FILENO, F_SETFL, oldf);
+	 
+	  	if(ch != EOF){
+			ungetc(ch, stdin);
+	    	return 1;
+		}
+		return 0;
+	}
+	
+#elif defined(_WIN32)||defined(_WIN64)
+	#include <Windows.h>
+	#define CLEAR "cls"
+	#define getcharacter getch()
+	#define DELAY 10
+#endif
 
 #define H 31
 #define W 28
@@ -36,7 +73,7 @@ int main(){
 	delay(100);
 	while("The Earth is flat"){
 		if(kbhit()){
-			switch(getchar()){
+			switch(getcharacter){
 				case 'w':
 				if(m[pacman[0] - 1][pacman[1]] != 1 && m[pacman[0] - 1][pacman[1]] != 4){
 					pacman[0]--;
@@ -117,53 +154,77 @@ int main(){
 				}
 			}			
 		}
-		printf("%d", f);
-		delay(50);
+		delay(DELAY);
 	}
-	
 	return 0;
 }
 
 void Render(int m[H][W], char c[5], int pacman[2], int ghost[4][4], int point){
-	int i, j, k;
-	system("clear");
+	int i, j, k, z = 0;
+	char matrix[2000];
+	system(CLEAR);
 	printf("POINTS: %.4d\n", point);
 	for(i = 0; i<H; i++){
 		for(j = 0; j<W; j++){
 			if(m[i][j] == 1 || m[i][j] == 4){
-				printf("%c%c", c[m[i][j]], c[m[i][j]]);
+				//printf("%c%c", c[m[i][j]], c[m[i][j]]);
+				matrix[z] = c[m[i][j]]; z++;
+				matrix[z] = c[m[i][j]]; z++;
 			}else if(i == ghost[0][0] && j == ghost[0][1]){
 				if(ghost[0][3] == 0){
-					printf("{}");
+					//printf("{}");
+					matrix[z] = '{'; z++;
+					matrix[z] = '}'; z++;
 				}else{
-					printf("}{");
+					//printf("}{");
+					matrix[z] = '}'; z++;
+					matrix[z] = '{'; z++;
 				}
 			}else if(i == ghost[1][0] && j == ghost[1][1]){
 				if(ghost[1][3] == 0){
-					printf("{}");
+					//printf("{}");
+					matrix[z] = '{'; z++;
+					matrix[z] = '}'; z++;
 				}else{
-					printf("}{");
+					//printf("}{");
+					matrix[z] = '}'; z++;
+					matrix[z] = '{'; z++;
 				}
 			}else if(i == ghost[2][0] && j == ghost[2][1]){
 				if(ghost[2][3] == 0){
-					printf("{}");
+					//printf("{}");
+					matrix[z] = '{'; z++;
+					matrix[z] = '}'; z++;
 				}else{
-					printf("}{");
+					//printf("}{");
+					matrix[z] = '}'; z++;
+					matrix[z] = '{'; z++;
 				}
 			}else if(i == ghost[3][0] && j == ghost[3][1]){
 				if(ghost[3][3] == 0){
-					printf("{}");
+					//printf("{}");
+					matrix[z] = '{'; z++;
+					matrix[z] = '}'; z++;
 				}else{
-					printf("}{");
+					//printf("}{");
+					matrix[z] = '}'; z++;
+					matrix[z] = '{'; z++;
 				}
 			}else if(i == pacman[0] && j == pacman[1]){
-				printf("()");
+				//printf("()");
+				matrix[z] = '('; z++;
+				matrix[z] = ')'; z++;
 			}else{
-				printf("%c ", c[m[i][j]]);
+				//printf("%c ", c[m[i][j]]);
+				matrix[z] = c[m[i][j]]; z++;
+				matrix[z] = ' '; z++;
 			}
 		}
-		printf("\n");
+		//printf("\n");
+		matrix[z] = '\n'; z++;
 	}
+	matrix[z] = '\0'; z++;
+	printf("%s", matrix);
 }
 
 void Move(int m[H][W], int ghost[4][4], int x){
@@ -202,30 +263,6 @@ void Move(int m[H][W], int ghost[4][4], int x){
 	}
 }
 
-int kbhit(){
-	struct termios oldt, newt;
-  	int ch;
-  	int oldf;
- 
-  	tcgetattr(STDIN_FILENO, &oldt);
-  	newt = oldt;
-  	newt.c_lflag &= ~(ICANON | ECHO);
-  	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-  	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-  	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
- 
-  	ch = getchar();
- 
-  	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-  	fcntl(STDIN_FILENO, F_SETFL, oldf);
- 
-  	if(ch != EOF){
-		ungetc(ch, stdin);
-    	return 1;
-	}
-	return 0;
-}
-
 void delay(int milliseconds){
     long pause;
     clock_t now,then;
@@ -238,7 +275,7 @@ void delay(int milliseconds){
 
 void Render2(int m[H][W], char c[5], int x){
 	int i, j, z;
-	system("clear");
+	system(CLEAR);
 	printf("\n");
 	for(i = 0; i<H; i++){
 		z = 0;
