@@ -11,7 +11,7 @@ It use ascii for rappresent game:
  	{} normal ghost
  	}{ edible ghost
 
-it is compatible for Mac OXS, Linux and Windows
+it is compatible for Mac OSX, Linux and Windows
 
 
 Yes, I know. In the main while I written "The Earth is flat". It work fine, checkmate NASA.
